@@ -11,17 +11,6 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 
-print(torch.cuda.is_available())  # Should return True
-print(torch.cuda.get_device_name(0))  # Should return your GPU model
-
-# Hyperparameters
-batch_size = 32
-learning_rate = 0.001
-num_epochs = 10
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print("Device:", device)
-
 
 # Define a custom dataset
 class CancerDataset(Dataset):
@@ -43,11 +32,6 @@ class CancerDataset(Dataset):
             image = self.transform(image)  # Apply transformations
 
         return image, label  # Return the image and label
-
-
-# Define transformations
-transform = transforms.Compose([transforms.Resize((64, 64)), transforms.ToTensor(),
-                                transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
 
 
 # Define the SimpleCNN model
@@ -100,9 +84,7 @@ class TestCancerDataset(Dataset):
         return image, self.image_files[idx]  # return image and filename
 
 
-run_type = "predict"
-
-if run_type == "train":
+def run_training():
     # Initialize the dataset
     train_dataset = CancerDataset(csv_file='data/train_labels.csv', root_dir='data/train', transform=transform)
 
@@ -183,7 +165,8 @@ if run_type == "train":
     plt.savefig('training_validation_plots.png')
     plt.show()
 
-else:
+
+def run_predicting():
     test_dataset = TestCancerDataset(root_dir='data/test', transform=transform)
     test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
 
@@ -208,3 +191,26 @@ else:
         writer.writerows(predictions)
 
     print("Predictions saved to predictions.csv")
+
+
+if __name__ == '__main__':
+    has_cuda = torch.cuda.is_available()
+    if has_cuda:
+        print(torch.cuda.get_device_name(0))  # Should return your GPU model
+    else:
+        print("Cuda unavailable")
+
+    # Hyperparameters
+    batch_size = 32
+    learning_rate = 0.001
+    num_epochs = 10
+
+    device = torch.device("cuda" if has_cuda else "cpu")
+    print("Device:", device)
+
+    # Define transformations
+    transform = transforms.Compose([transforms.Resize((64, 64)), transforms.ToTensor(),
+                                    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
+
+    run_training()
+    run_predicting()
